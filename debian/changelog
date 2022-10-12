@@ -1,0 +1,155 @@
+lv2 (1.18.2-1) unstable; urgency=medium
+
+  [ Olivier Humbert ]
+  * d/lv2-dev.install: installs lv2_validate
+  * d/not-installed: lv2_validate is installed now
+  * d/control: removal of the reference to lv2specgen
+
+  [ Dennis Braun ]
+  * New upstream version 1.18.2
+  * Bump S-V to 4.5.1
+
+ -- Dennis Braun <d_braun@kabelmail.de>  Sun, 17 Jan 2021 21:56:59 +0100
+
+lv2 (1.18.0-1) unstable; urgency=medium
+
+  [ Olivier Humbert ]
+  * d/copyright: https -> https
+
+  [ Dennis Braun ]
+  * New upstream version 1.18.0
+  * Bump S-V to 4.5.0
+  * Bump dh-compat to 13
+  * Mark lv2-dev as Multi-Arch: same
+  * Add me as uploader
+  * Update d/copyright year
+  * Use https protocol for the source url
+  * Use https protocol for the homepage url
+  * Add d/not-installed
+  * Add d/upstream/metadata
+  * Update d/watch to check signing
+
+ -- Dennis Braun <d_braun@kabelmail.de>  Fri, 08 May 2020 22:31:46 +0200
+
+lv2 (1.16.0-1) unstable; urgency=medium
+
+  * Team upload
+
+  [ Ondřej Nový ]
+  * Use debhelper-compat instead of debian/compat
+
+  [ Sebastian Ramacher ]
+  * New upstream release
+  * debian/control:
+    - Set RRR: no
+    - Remove obsolete Breaks+Replaces
+    - Bump debhelper compat to 12
+    - Bump Standards-Version
+  * debian/: Run waf with Python 3
+
+ -- Sebastian Ramacher <sramacher@debian.org>  Wed, 16 Oct 2019 00:35:01 +0200
+
+lv2 (1.14.0~dfsg1-2) unstable; urgency=medium
+
+  * Bump Standards.
+  * Set dh/compat 11.
+  * Update VCS to salsa.
+  * New maintainer address <debian-multimedia@lists.d.o>
+  * Use secure uri in copyright file.
+  * Fix pkg-config path for cross compilation. (Closes: #888762)
+
+ -- Jaromír Mikeš <mira.mikes@seznam.cz>  Mon, 29 Jan 2018 23:02:59 +0100
+
+lv2 (1.14.0~dfsg1-1) unstable; urgency=medium
+
+  * New upstream version 1.14.0~dfsg1
+  * Fix hardening.
+  * Fix VCS fields.
+  * Bump Standards.
+  * Add .gitignore file.
+
+ -- Jaromír Mikeš <mira.mikes@seznam.cz>  Thu, 22 Sep 2016 13:20:16 +0200
+
+lv2 (1.12.0~dfsg0-1) unstable; urgency=medium
+
+  [ Felipe Sateler ]
+  * Simplify lv2-examples install file. Thanks to Falktx
+
+  [ Alessio Treglia ]
+  * New upstream release.
+  * debian/docs: Fix readme's filename.
+  * Bump Standards.
+
+ -- Alessio Treglia <alessio@debian.org>  Sun, 26 Apr 2015 20:21:39 +0100
+
+lv2 (1.10.0~dfsg1-1) unstable; urgency=medium
+
+  * New upstream release.
+
+  [ Jaromír Mikeš ]
+  * Set dh/compat 9.
+  * Remove --debug from configure to cppflags be passed.
+  * Tuned get-orig-source.
+
+  [ Alessio Treglia ]
+  * Add script to help out repacking the tarball.
+  * Move example plugins from lv2-dev to lv-examples.
+
+ -- Alessio Treglia <alessio@debian.org>  Wed, 13 Aug 2014 16:29:24 +0100
+
+lv2 (1.8.0~dfsg0-1) unstable; urgency=low
+
+  * New upstream release:
+    - Install lv2specgen for use by other projects.
+    - lv2specgen: Fix links to externally defined terms.
+    - Add scope example plugin from Robin Gareus.
+    - lv2core: Add lv2:prototype for property inheritance.
+    - atom: Make lv2_atom_*_is_end() arguments const.
+    - log: Add missing include <string.h> to logger.h for memset.
+    - ui: Fix LV2_UI_INVALID_PORT_INDEX identifier in documentation.
+  * Bump Standards.
+
+ -- Alessio Treglia <alessio@debian.org>  Mon, 06 Jan 2014 10:29:02 +0000
+
+lv2 (1.6.0~dfsg0-1) unstable; urgency=low
+
+  [ Alessio Treglia ]
+  * New upstream release.
+
+  [ Jaromír Mikeš ]
+  * Added myself as uploader
+
+ -- Alessio Treglia <alessio@debian.org>  Tue, 27 Aug 2013 17:56:31 +0100
+
+lv2 (1.4.0~dfsg1-2) unstable; urgency=low
+
+  * Upload to unstable.
+
+ -- Alessio Treglia <alessio@debian.org>  Mon, 06 May 2013 11:16:26 +0200
+
+lv2 (1.4.0~dfsg1-1) experimental; urgency=low
+
+  * New upstream release.
+  * Fix Vcs fields.
+  * Bump Standards.
+
+ -- Alessio Treglia <alessio@debian.org>  Wed, 06 Mar 2013 13:26:05 +0000
+
+lv2 (1.2.0~dfsg1-1) experimental; urgency=low
+
+  * New upstream release.
+  * Add get-orig-source target to strip out waf.
+
+ -- Alessio Treglia <alessio@debian.org>  Fri, 19 Oct 2012 09:49:54 +0100
+
+lv2 (1.0.0~dfsg2-2) unstable; urgency=low
+
+  * Breaks/Replaces on lv2-extensions-good rather than Conflicts/Replaces.
+
+ -- Alessio Treglia <alessio@debian.org>  Sat, 05 May 2012 01:56:58 +0200
+
+lv2 (1.0.0~dfsg2-1) unstable; urgency=low
+
+  * Initial release. (Closes: #669232)
+
+ -- Alessio Treglia <alessio@debian.org>  Wed, 18 Apr 2012 12:12:33 +0200
