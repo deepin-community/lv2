@@ -1,18 +1,5 @@
-/*
-  Copyright 2013 Robin Gareus <robin@gareus.org>
-
-  Permission to use, copy, modify, and/or distribute this software for any
-  purpose with or without fee is hereby granted, provided that the above
-  copyright notice and this permission notice appear in all copies.
-
-  THIS SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-  WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-  MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-  ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-  WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-  ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-  OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
+// Copyright 2013 Robin Gareus <robin@gareus.org>
+// SPDX-License-Identifier: ISC
 
 #include "./uris.h"
 
@@ -261,7 +248,9 @@ on_expose_event(GtkWidget* widget, GdkEventExpose* ev, gpointer data)
     for (uint32_t i = start; i < end; ++i) {
       if (i == chn->idx) {
         continue;
-      } else if (i % 2) {
+      }
+
+      if (i % 2) {
         cairo_line_to(cr, i - .5, CYPOS(chn->data_min[i]));
         cairo_line_to(cr, i - .5, CYPOS(chn->data_max[i]));
         ++pathlength;

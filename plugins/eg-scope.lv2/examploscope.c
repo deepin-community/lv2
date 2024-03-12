@@ -1,19 +1,6 @@
-/*
-  Copyright 2016 David Robillard <d@drobilla.net>
-  Copyright 2013 Robin Gareus <robin@gareus.org>
-
-  Permission to use, copy, modify, and/or distribute this software for any
-  purpose with or without fee is hereby granted, provided that the above
-  copyright notice and this permission notice appear in all copies.
-
-  THIS SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-  WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-  MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-  ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-  WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-  ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-  OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
+// Copyright 2016 David Robillard <d@drobilla.net>
+// Copyright 2013 Robin Gareus <robin@gareus.org>
+// SPDX-License-Identifier: ISC
 
 #include "./uris.h"
 
@@ -249,7 +236,7 @@ run(LV2_Handle handle, uint32_t n_samples)
 
     // Add UI state as properties
     lv2_atom_forge_key(&self->forge, self->uris.ui_spp);
-    lv2_atom_forge_int(&self->forge, self->ui_spp);
+    lv2_atom_forge_int(&self->forge, (int32_t)self->ui_spp);
     lv2_atom_forge_key(&self->forge, self->uris.ui_amp);
     lv2_atom_forge_float(&self->forge, self->ui_amp);
     lv2_atom_forge_key(&self->forge, self->uris.param_sampleRate);
@@ -295,7 +282,8 @@ run(LV2_Handle handle, uint32_t n_samples)
   for (uint32_t c = 0; c < self->n_channels; ++c) {
     if (self->ui_active) {
       // If UI is active, send raw audio data to UI
-      tx_rawaudio(&self->forge, &self->uris, c, n_samples, self->input[c]);
+      tx_rawaudio(
+        &self->forge, &self->uris, (int32_t)c, n_samples, self->input[c]);
     }
     // If not processing audio in-place, forward audio
     if (self->input[c] != self->output[c]) {

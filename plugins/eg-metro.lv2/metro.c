@@ -1,19 +1,5 @@
-/*
-  LV2 Metronome Example Plugin
-  Copyright 2012-2016 David Robillard <d@drobilla.net>
-
-  Permission to use, copy, modify, and/or distribute this software for any
-  purpose with or without fee is hereby granted, provided that the above
-  copyright notice and this permission notice appear in all copies.
-
-  THIS SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-  WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-  MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-  ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-  WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-  ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-  OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
+// Copyright 2012-2016 David Robillard <d@drobilla.net>
+// SPDX-License-Identifier: ISC
 
 #include "lv2/atom/atom.h"
 #include "lv2/atom/util.h"
@@ -212,7 +198,7 @@ static void
 play(Metro* self, uint32_t begin, uint32_t end)
 {
   float* const   output          = self->ports.output;
-  const uint32_t frames_per_beat = 60.0f / self->bpm * self->rate;
+  const uint32_t frames_per_beat = (uint32_t)(60.0f / self->bpm * self->rate);
 
   if (self->speed == 0.0f) {
     memset(output, 0, (end - begin) * sizeof(float));
@@ -223,7 +209,7 @@ play(Metro* self, uint32_t begin, uint32_t end)
     switch (self->state) {
     case STATE_ATTACK:
       // Amplitude increases from 0..1 until attack_len
-      output[i] = self->wave[self->wave_offset] * self->elapsed_len /
+      output[i] = self->wave[self->wave_offset] * (float)self->elapsed_len /
                   (float)self->attack_len;
       if (self->elapsed_len >= self->attack_len) {
         self->state = STATE_DECAY;
@@ -289,7 +275,7 @@ update_position(Metro* self, const LV2_Atom_Object* obj)
     const float frames_per_beat = (float)(60.0 / self->bpm * self->rate);
     const float bar_beats       = ((LV2_Atom_Float*)beat)->body;
     const float beat_beats      = bar_beats - floorf(bar_beats);
-    self->elapsed_len           = beat_beats * frames_per_beat;
+    self->elapsed_len           = (uint32_t)(beat_beats * frames_per_beat);
     if (self->elapsed_len < self->attack_len) {
       self->state = STATE_ATTACK;
     } else if (self->elapsed_len < self->attack_len + self->decay_len) {
@@ -313,7 +299,7 @@ run(LV2_Handle instance, uint32_t sample_count)
        !lv2_atom_sequence_is_end(&in->body, in->atom.size, ev);
        ev = lv2_atom_sequence_next(ev)) {
     // Play the click for the time slice from last_t until now
-    play(self, last_t, ev->time.frames);
+    play(self, last_t, (uint32_t)ev->time.frames);
 
     // Check if this event is an Object
     // (or deprecated Blank to tolerate old hosts)
@@ -327,7 +313,7 @@ run(LV2_Handle instance, uint32_t sample_count)
     }
 
     // Update time for next iteration and move to next event
-    last_t = ev->time.frames;
+    last_t = (uint32_t)ev->time.frames;
   }
 
   // Play for remainder of cycle
@@ -345,8 +331,9 @@ static const LV2_Descriptor descriptor = {
   NULL, // extension_data
 };
 
-LV2_SYMBOL_EXPORT const LV2_Descriptor*
-                        lv2_descriptor(uint32_t index)
+LV2_SYMBOL_EXPORT
+const LV2_Descriptor*
+lv2_descriptor(uint32_t index)
 {
   return index == 0 ? &descriptor : NULL;
 }

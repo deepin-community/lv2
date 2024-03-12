@@ -1,21 +1,7 @@
-/*
-  LV2 Sampler Example Plugin
-  Copyright 2011-2016 David Robillard <d@drobilla.net>
-  Copyright 2011 Gabriel M. Beddingfield <gabriel@teuton.org>
-  Copyright 2011 James Morris <jwm.art.net@gmail.com>
-
-  Permission to use, copy, modify, and/or distribute this software for any
-  purpose with or without fee is hereby granted, provided that the above
-  copyright notice and this permission notice appear in all copies.
-
-  THIS SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-  WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-  MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-  ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-  WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-  ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-  OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
+// Copyright 2011-2016 David Robillard <d@drobilla.net>
+// Copyright 2011 Gabriel M. Beddingfield <gabriel@teuton.org>
+// Copyright 2011 James Morris <jwm.art.net@gmail.com>
+// SPDX-License-Identifier: ISC
 
 #include "atom_sink.h"
 #include "peaks.h"
@@ -33,6 +19,7 @@
 #include "lv2/urid/urid.h"
 #include "lv2/worker/worker.h"
 
+#include <samplerate.h>
 #include <sndfile.h>
 
 #include <math.h>
@@ -80,6 +67,7 @@ typedef struct {
   bool       activated;
   bool       gain_changed;
   bool       sample_changed;
+  int        sample_rate;
 } Sampler;
 
 /**
@@ -96,6 +84,23 @@ typedef struct {
 } SampleMessage;
 
 /**
+   Convert an interleaved audio buffer to mono.
+
+   This simply ignores the data on all channels but the first.
+*/
+static sf_count_t
+convert_to_mono(float* data, sf_count_t num_input_frames, uint32_t channels)
+{
+  sf_count_t num_output_frames = 0;
+
+  for (sf_count_t i = 0; i < num_input_frames * channels; i += channels) {
+    data[num_output_frames++] = data[i];
+  }
+
+  return num_output_frames;
+}
+
+/**
    Load a new sample and return it.
 
    Since this is of course not a real-time safe action, this is called in the
@@ -103,7 +108,7 @@ typedef struct {
    not modified.
 */
 static Sample*
-load_sample(LV2_Log_Logger* logger, const char* path)
+load_sample(LV2_Log_Logger* logger, const char* path, const int sample_rate)
 {
   lv2_log_trace(logger, "Loading %s\n", path);
 
@@ -115,9 +120,8 @@ load_sample(LV2_Log_Logger* logger, const char* path)
   bool           error    = true;
   if (!sndfile || !info->frames) {
     lv2_log_error(logger, "Failed to open %s\n", path);
-  } else if (info->channels != 1) {
-    lv2_log_error(logger, "%s has %d channels\n", path, info->channels);
-  } else if (!(data = (float*)malloc(sizeof(float) * info->frames))) {
+  } else if (!(data = (float*)malloc(sizeof(float) * info->frames *
+                                     info->channels))) {
     lv2_log_error(logger, "Failed to allocate memory for sample\n");
   } else {
     error = false;
@@ -130,9 +134,50 @@ load_sample(LV2_Log_Logger* logger, const char* path)
     return NULL;
   }
 
-  sf_seek(sndfile, 0ul, SEEK_SET);
-  sf_read_float(sndfile, data, info->frames);
+  sf_seek(sndfile, 0UL, SEEK_SET);
+  sf_read_float(sndfile, data, info->frames * info->channels);
   sf_close(sndfile);
+
+  if (info->channels != 1) {
+    info->frames   = convert_to_mono(data, info->frames, info->channels);
+    info->channels = 1;
+  }
+
+  if (info->samplerate != sample_rate) {
+    lv2_log_trace(logger,
+                  "Converting from %d Hz to %d Hz\n",
+                  info->samplerate,
+                  sample_rate);
+
+    const double src_ratio     = (double)sample_rate / (double)info->samplerate;
+    const double output_length = ceil((double)info->frames * src_ratio);
+    const long   output_frames = (long)output_length;
+    float* const output_buffer = (float*)malloc(sizeof(float) * output_frames);
+
+    SRC_DATA src_data = {
+      data,
+      output_buffer,
+      info->frames,
+      output_frames,
+      0,
+      0,
+      0,
+      src_ratio,
+    };
+
+    if (src_simple(&src_data, SRC_SINC_BEST_QUALITY, 1) != 0) {
+      lv2_log_error(logger, "Sample rate conversion failed\n");
+      free(output_buffer);
+    } else {
+      // Replace original data with converted buffer
+      free(data);
+      data         = output_buffer;
+      info->frames = src_data.output_frames_gen;
+    }
+  } else {
+    lv2_log_trace(
+      logger, "Sample matches the current rate of %d Hz\n", sample_rate);
+  }
 
   // Fill sample struct and return it
   sample->data     = data;
@@ -184,7 +229,7 @@ work(LV2_Handle                  instance,
     }
 
     // Load sample.
-    Sample* sample = load_sample(&self->logger, path);
+    Sample* sample = load_sample(&self->logger, path, self->sample_rate);
     if (sample) {
       // Send new sample to run() to be applied
       respond(handle, sizeof(Sample*), &sample);
@@ -210,6 +255,10 @@ work_response(LV2_Handle instance, uint32_t size, const void* data)
 
   // Install the new sample
   self->sample = *(Sample* const*)data;
+
+  // Stop playing previous sample, which can be larger than new one
+  self->frame = 0;
+  self->play  = false;
 
   // Schedule work to free the old sample
   SampleMessage msg = {{sizeof(Sample*), self->uris.eg_freeSample}, old_sample};
@@ -276,8 +325,9 @@ instantiate(const LV2_Descriptor*     descriptor,
   lv2_atom_forge_init(&self->forge, self->map);
   peaks_sender_init(&self->psend, self->map);
 
-  self->gain    = 1.0f;
-  self->gain_dB = 0.0f;
+  self->gain        = 1.0f;
+  self->gain_dB     = 0.0f;
+  self->sample_rate = (int)rate;
 
   return (LV2_Handle)self;
 }
@@ -344,7 +394,9 @@ handle_event(Sampler* self, LV2_Atom_Event* ev)
       if (!property) {
         lv2_log_error(&self->logger, "Set message with no property\n");
         return;
-      } else if (property->type != uris->atom_URID) {
+      }
+
+      if (property->type != uris->atom_URID) {
         lv2_log_error(&self->logger, "Set property is not a URID\n");
         return;
       }
@@ -434,20 +486,19 @@ run(LV2_Handle instance, uint32_t sample_count)
   // Start a sequence in the notify output port.
   lv2_atom_forge_sequence_head(&self->forge, &self->notify_frame, 0);
 
-  // Send update to UI if gain or sample has changed due to state restore
-  if (self->gain_changed || self->sample_changed) {
+  // Send update to UI if gain has changed due to state restore
+  if (self->gain_changed) {
     lv2_atom_forge_frame_time(&self->forge, 0);
+    write_set_gain(&self->forge, &self->uris, self->gain_dB);
+    self->gain_changed = false;
+  }
 
-    if (self->gain_changed) {
-      write_set_gain(&self->forge, &self->uris, self->gain_dB);
-      self->gain_changed = false;
-    }
-
-    if (self->sample_changed) {
-      write_set_file(
-        &self->forge, &self->uris, self->sample->path, self->sample->path_len);
-      self->sample_changed = false;
-    }
+  // Send update to UI if sample has changed due to state restore
+  if (self->sample_changed) {
+    lv2_atom_forge_frame_time(&self->forge, 0);
+    write_set_file(
+      &self->forge, &self->uris, self->sample->path, self->sample->path_len);
+    self->sample_changed = false;
   }
 
   // Iterate over incoming events, emitting audio along the way
@@ -457,7 +508,7 @@ run(LV2_Handle instance, uint32_t sample_count)
     render(self, self->frame_offset, ev->time.frames);
 
     /* Update current frame offset to this event's time.  This is stored in
-       the instance because it is used for sychronous worker event
+       the instance because it is used for synchronous worker event
        execution.  This allows a sample load event to be executed with
        sample accuracy when running in a non-realtime context (such as
        exporting a session). */
@@ -549,10 +600,13 @@ restore(LV2_Handle                  instance,
   uint32_t    valflags = 0;
   const void* value =
     retrieve(handle, self->uris.eg_sample, &size, &type, &valflags);
+
   if (!value) {
     lv2_log_error(&self->logger, "Missing eg:sample\n");
     return LV2_STATE_ERR_NO_PROPERTY;
-  } else if (type != self->uris.atom_Path) {
+  }
+
+  if (type != self->uris.atom_Path) {
     lv2_log_error(&self->logger, "Non-path eg:sample\n");
     return LV2_STATE_ERR_BAD_TYPE;
   }
@@ -565,7 +619,7 @@ restore(LV2_Handle                  instance,
   if (!self->activated || !schedule) {
     // No scheduling available, load sample immediately
     lv2_log_trace(&self->logger, "Synchronous restore\n");
-    Sample* sample = load_sample(&self->logger, path);
+    Sample* sample = load_sample(&self->logger, path, self->sample_rate);
     if (sample) {
       free_sample(self, self->sample);
       self->sample         = sample;
@@ -589,11 +643,14 @@ restore(LV2_Handle                  instance,
 
   // Get param:gain from state
   value = retrieve(handle, self->uris.param_gain, &size, &type, &valflags);
+
   if (!value) {
     // Not an error, since older versions did not save this property
     lv2_log_note(&self->logger, "Missing param:gain\n");
     return LV2_STATE_SUCCESS;
-  } else if (type != self->uris.atom_Float) {
+  }
+
+  if (type != self->uris.atom_Float) {
     lv2_log_error(&self->logger, "Non-float param:gain\n");
     return LV2_STATE_ERR_BAD_TYPE;
   }
@@ -610,11 +667,15 @@ extension_data(const char* uri)
 {
   static const LV2_State_Interface  state  = {save, restore};
   static const LV2_Worker_Interface worker = {work, work_response, NULL};
+
   if (!strcmp(uri, LV2_STATE__interface)) {
     return &state;
-  } else if (!strcmp(uri, LV2_WORKER__interface)) {
+  }
+
+  if (!strcmp(uri, LV2_WORKER__interface)) {
     return &worker;
   }
+
   return NULL;
 }
 

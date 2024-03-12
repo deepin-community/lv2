@@ -1,34 +1,13 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 #
-# lv2specgen, a documentation generator for LV2 specifications.
-# Copyright (c) 2009-2014 David Robillard <d@drobilla.net>
+# Copyright 2009-2022 David Robillard <d@drobilla.net>
+# Copyright 2003-2008 Christopher Schmidt <crschmidt@crschmidt.net>
+# Copyright 2005-2008 Uldis Bojars <uldis.bojars@deri.org>
+# Copyright 2007-2008 Sergio Fernández <sergio.fernandez@fundacionctic.org>
+# SPDX-License-Identifier: MIT
 #
 # Based on SpecGen:
 # <http://forge.morfeo-project.org/wiki_en/index.php/SpecGen>
-# Copyright (c) 2003-2008 Christopher Schmidt <crschmidt@crschmidt.net>
-# Copyright (c) 2005-2008 Uldis Bojars <uldis.bojars@deri.org>
-# Copyright (c) 2007-2008 Sergio Fernández <sergio.fernandez@fundacionctic.org>
-#
-# This software is licensed under the terms of the MIT License.
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.
 
 import datetime
 import markdown
@@ -86,20 +65,13 @@ spec_pre = None
 spec_bundle = None
 specgendir = None
 ns_list = {
+    "http://purl.org/dc/terms/": "dcterms",
+    "http://usefulinc.com/ns/doap#": "doap",
+    "http://xmlns.com/foaf/0.1/": "foaf",
+    "http://www.w3.org/2002/07/owl#": "owl",
     "http://www.w3.org/1999/02/22-rdf-syntax-ns#": "rdf",
     "http://www.w3.org/2000/01/rdf-schema#": "rdfs",
-    "http://www.w3.org/2002/07/owl#": "owl",
     "http://www.w3.org/2001/XMLSchema#": "xsd",
-    "http://rdfs.org/sioc/ns#": "sioc",
-    "http://xmlns.com/foaf/0.1/": "foaf",
-    "http://purl.org/dc/elements/1.1/": "dc",
-    "http://purl.org/dc/terms/": "dct",
-    "http://purl.org/rss/1.0/modules/content/": "content",
-    "http://www.w3.org/2003/01/geo/wgs84_pos#": "geo",
-    "http://www.w3.org/2004/02/skos/core#": "skos",
-    "http://lv2plug.in/ns/lv2core#": "lv2",
-    "http://usefulinc.com/ns/doap#": "doap",
-    "http://ontologi.es/doap-changeset#": "dcs",
 }
 
 rdf = rdflib.Namespace("http://www.w3.org/1999/02/22-rdf-syntax-ns#")
@@ -107,7 +79,6 @@ rdfs = rdflib.Namespace("http://www.w3.org/2000/01/rdf-schema#")
 owl = rdflib.Namespace("http://www.w3.org/2002/07/owl#")
 lv2 = rdflib.Namespace("http://lv2plug.in/ns/lv2core#")
 doap = rdflib.Namespace("http://usefulinc.com/ns/doap#")
-dcs = rdflib.Namespace("http://ontologi.es/doap-changeset#")
 foaf = rdflib.Namespace("http://xmlns.com/foaf/0.1/")
 
 
@@ -154,7 +125,7 @@ def isLiteral(n):
 def niceName(uri):
     global spec_bundle
     if uri.startswith(spec_ns_str):
-        return uri[len(spec_ns_str) :]
+        return uri.replace(spec_ns_str, "")
     elif uri == str(rdfs.seeAlso):
         return "See also"
 
@@ -166,8 +137,6 @@ def niceName(uri):
     if pref in ns_list:
         return ns_list.get(pref, pref) + ":" + rez.group(2)
     else:
-        print("warning: prefix %s not in ns list:" % pref)
-        print(ns_list)
         return uri
 
 
@@ -239,9 +208,9 @@ def linkifyVocabIdentifiers(m, string, classlist, proplist, instalist):
 def prettifyHtml(m, markup, subject, classlist, proplist, instalist):
     # Syntax highlight all C code
     if have_pygments:
-        code_rgx = re.compile('<pre class="c-code">(.*?)</pre>', re.DOTALL)
+        code_re = re.compile('<pre class="c-code">(.*?)</pre>', re.DOTALL)
         while True:
-            code = code_rgx.search(markup)
+            code = code_re.search(markup)
             if not code:
                 break
             match_str = xml.sax.saxutils.unescape(code.group(1))
@@ -250,15 +219,13 @@ def prettifyHtml(m, markup, subject, classlist, proplist, instalist):
                 pygments.lexers.CLexer(),
                 pygments.formatters.HtmlFormatter(),
             )
-            markup = code_rgx.sub(code_str, markup, 1)
+            markup = code_re.sub(code_str, markup, 1)
 
     # Syntax highlight all Turtle code
     if have_pygments:
-        code_rgx = re.compile(
-            '<pre class="turtle-code">(.*?)</pre>', re.DOTALL
-        )
+        code_re = re.compile('<pre class="turtle-code">(.*?)</pre>', re.DOTALL)
         while True:
-            code = code_rgx.search(markup)
+            code = code_re.search(markup)
             if not code:
                 break
             match_str = xml.sax.saxutils.unescape(code.group(1))
@@ -267,7 +234,7 @@ def prettifyHtml(m, markup, subject, classlist, proplist, instalist):
                 pygments.lexers.rdf.TurtleLexer(),
                 pygments.formatters.HtmlFormatter(),
             )
-            markup = code_rgx.sub(code_str, markup, 1)
+            markup = code_re.sub(code_str, markup, 1)
 
     # Add links to code documentation for identifiers
     markup = linkifyCodeIdentifiers(markup)
@@ -768,12 +735,15 @@ def docTerms(category, list, m, classlist, proplist, instalist):
     doc = ""
     for term in list:
         if not term.startswith(spec_ns_str):
-            sys.stderr.write("warning: Skipping external term `%s'" % term)
             continue
 
         t = termName(m, term)
         curie = term.split(spec_ns_str[-1])[1]
-        doc += '<div class="specterm" id="%s" about="%s">' % (t, term)
+        if t:
+            doc += '<div class="specterm" id="%s" about="%s">' % (t, term)
+        else:
+            doc += '<div class="specterm" about="%s">' % term
+
         doc += '<h3><a href="#%s">%s</a></h3>' % (getAnchor(term), curie)
         doc += '<span class="spectermtype">%s</span>' % category
 
@@ -830,7 +800,7 @@ def getShortName(uri):
 def getAnchor(uri):
     uri = str(uri)
     if uri.startswith(spec_ns_str):
-        return uri[len(spec_ns_str) :].replace("/", "_")
+        return uri.replace(spec_ns_str, "").replace("/", "_")
     else:
         return getShortName(uri)
 
@@ -861,7 +831,7 @@ def buildIndex(m, classlist, proplist, instalist=None):
             local_subclass = False
             for p in findStatements(m, c, rdfs.subClassOf, None):
                 parent = str(p[2])
-                if parent[0 : len(spec_ns_str)] == spec_ns_str:
+                if parent.startswith(spec_ns_str):
                     local_subclass = True
             if local_subclass:
                 continue
@@ -1020,17 +990,14 @@ def specAuthors(m, subject):
     for d in sorted(dev):
         if not first:
             devdoc += ", "
-        devdoc += (
-            '<span class="author" property="doap:developer">%s</span>' % d
-        )
+
+        devdoc += f'<span class="author" property="doap:developer">{d}</span>'
         first = False
     if len(dev) == 1:
-        doc += (
-            '<tr><th class="metahead">Developer</th><td>%s</td></tr>' % devdoc
-        )
+        doc += f'<tr><th class="metahead">Developer</th><td>{devdoc}</td></tr>'
     elif len(dev) > 0:
         doc += (
-            '<tr><th class="metahead">Developers</th><td>%s</td></tr>' % devdoc
+            f'<tr><th class="metahead">Developers</th><td>{devdoc}</td></tr>'
         )
 
     maintdoc = ""
@@ -1038,93 +1005,16 @@ def specAuthors(m, subject):
     for m in sorted(maint):
         if not first:
             maintdoc += ", "
+
         maintdoc += (
-            '<span class="author" property="doap:maintainer">%s</span>' % m
+            f'<span class="author" property="doap:maintainer">{m}</span>'
         )
         first = False
-    if len(maint) == 1:
-        doc += (
-            '<tr><th class="metahead">Maintainer</th><td>%s</td></tr>'
-            % maintdoc
-        )
-    elif len(maint) > 0:
-        doc += (
-            '<tr><th class="metahead">Maintainers</th><td>%s</td></tr>'
-            % maintdoc
-        )
+    if len(maint):
+        label = "Maintainer" if len(maint) == 1 else "Maintainers"
+        doc += f'<tr><th class="metahead">{label}</th><td>{maintdoc}</td></tr>'
 
     return doc
-
-
-def releaseChangeset(m, release, prefix=""):
-    changeset = findOne(m, release, dcs.changeset, None)
-    if changeset is None:
-        return ""
-
-    entry = ""
-    # entry = '<dd><ul>\n'
-    for i in sorted(findStatements(m, getObject(changeset), dcs.item, None)):
-        item = getObject(i)
-        label = findOne(m, item, rdfs.label, None)
-        if not label:
-            print("error: dcs:item has no rdfs:label")
-            continue
-
-        text = getLiteralString(getObject(label))
-        if prefix:
-            text = prefix + ": " + text
-
-        entry += "<li>%s</li>\n" % text
-
-    # entry += '</ul></dd>\n'
-    return entry
-
-
-def specHistoryEntries(m, subject, entries):
-    for r in findStatements(m, subject, doap.release, None):
-        release = getObject(r)
-        revNode = findOne(m, release, doap.revision, None)
-        if not revNode:
-            print("error: doap:release has no doap:revision")
-            continue
-
-        rev = getLiteralString(getObject(revNode))
-
-        created = findOne(m, release, doap.created, None)
-
-        dist = findOne(m, release, doap["file-release"], None)
-        if dist:
-            entry = '<dt><a href="%s">Version %s</a>' % (getObject(dist), rev)
-        else:
-            entry = "<dt>Version %s" % rev
-            # print("warning: doap:release has no doap:file-release")
-
-        if created:
-            entry += " (%s)</dt>\n" % getLiteralString(getObject(created))
-        else:
-            entry += ' (<span class="warning">EXPERIMENTAL</span>)</dt>'
-
-        entry += "<dd><ul>\n%s" % releaseChangeset(m, release)
-
-        if dist is not None:
-            entries[(getObject(created), getObject(dist))] = entry
-
-    return entries
-
-
-def specHistoryMarkup(entries):
-    if len(entries) > 0:
-        history = "<dl>\n"
-        for e in sorted(entries.keys(), reverse=True):
-            history += entries[e] + "</ul></dd>"
-        history += "</dl>\n"
-        return history
-    else:
-        return ""
-
-
-def specHistory(m, subject):
-    return specHistoryMarkup(specHistoryEntries(m, subject, {}))
 
 
 def specVersion(m, subject):
@@ -1246,129 +1136,14 @@ def load_tags(path, docdir):
     return linkmap
 
 
-def writeIndex(model, specloc, index_path, root_path, root_uri, online):
-    # Get extension URI
-    ext_node = model.value(None, rdf.type, lv2.Specification)
-    if not ext_node:
-        ext_node = model.value(None, rdf.type, owl.Ontology)
-    if not ext_node:
-        print("no extension found in %s" % bundle)
-        sys.exit(1)
-
-    ext = str(ext_node)
-
-    # Get version
-    minor = 0
-    micro = 0
-    try:
-        minor = int(model.value(ext_node, lv2.minorVersion, None))
-        micro = int(model.value(ext_node, lv2.microVersion, None))
-    except Exception:
-        print("warning: %s: failed to find version for %s" % (bundle, ext))
-
-    # Get date
-    date = None
-    for r in model.triples([ext_node, doap.release, None]):
-        revision = model.value(r[2], doap.revision, None)
-        if str(revision) == ("%d.%d" % (minor, micro)):
-            date = model.value(r[2], doap.created, None)
-            break
-
-    # Verify that this date is the latest
-    if date is None:
-        print("warning: %s has no doap:created date" % ext_node)
-    else:
-        for r in model.triples([ext_node, doap.release, None]):
-            this_date = model.value(r[2], doap.created, None)
-            if this_date is None:
-                print(
-                    "warning: %s has no doap:created date"
-                    % (ext_node, minor, micro, date)
-                )
-                continue
-
-            if this_date > date:
-                print(
-                    "warning: %s revision %d.%d (%s) is not the latest release"
-                    % (ext_node, minor, micro, date)
-                )
-                break
-
-    # Get name and short description
-    name = model.value(ext_node, doap.name, None)
-    shortdesc = model.value(ext_node, doap.shortdesc, None)
-
-    # Chop 'LV2' prefix from name for cleaner index
-    if name.startswith("LV2 "):
-        name = name[4:]
-
-    # Find relative link target
-    if root_uri and ext_node.startswith(root_uri):
-        target = ext_node[len(root_uri) :]
-    else:
-        target = os.path.relpath(ext_node, root_path)
-
-    if not online:
-        target += ".html"
-
-    stem = os.path.splitext(os.path.basename(target))[0]
-
-    # Specification (comment is to act as a sort key)
-    row = '<tr><!-- %s --><td><a rel="rdfs:seeAlso" href="%s">%s</a></td>' % (
-        b,
-        target,
-        name,
-    )
-
-    # API
-    row += "<td>"
-    row += '<a rel="rdfs:seeAlso" href="../doc/html/group__%s.html">%s</a>' % (
-        stem,
-        name,
-    )
-    row += "</td>"
-
-    # Description
-    if shortdesc:
-        row += "<td>" + str(shortdesc) + "</td>"
-    else:
-        row += "<td></td>"
-
-    # Version
-    version_str = "%s.%s" % (minor, micro)
-    if minor == 0 or (micro % 2 != 0):
-        row += '<td><span style="color: red">' + version_str + "</span></td>"
-    else:
-        row += "<td>" + version_str + "</td>"
-
-    # Status
-    deprecated = model.value(ext_node, owl.deprecated, None)
-    if minor == 0:
-        row += '<td><span class="error">Experimental</span></td>'
-    elif deprecated and str(deprecated[2]) != "false":
-        row += '<td><span class="warning">Deprecated</span></td>'
-    elif micro % 2 == 0:
-        row += '<td><span class="success">Stable</span></td>'
-
-    row += "</tr>"
-
-    index = open(index_path, "w")
-    index.write(row)
-    index.close()
-
-
 def specgen(
     specloc,
-    indir,
+    template_path,
     style_uri,
     docdir,
     tags,
     opts,
     instances=False,
-    root_link=None,
-    index_path=None,
-    root_path=None,
-    root_uri=None,
 ):
     """The meat and potatoes: Everything starts here."""
 
@@ -1382,19 +1157,21 @@ def specgen(
     global linkmap
 
     spec_bundle = "file://%s/" % os.path.abspath(os.path.dirname(specloc))
-    specgendir = os.path.abspath(indir)
 
     # Template
-    temploc = os.path.join(indir, "template.html")
-    template = None
-    f = open(temploc, "r")
-    template = f.read()
-    f.close()
+    with open(template_path, "r") as f:
+        template = f.read()
 
     # Load code documentation link map from tags file
     linkmap = load_tags(tags, docdir)
 
     m = rdflib.ConjunctiveGraph()
+
+    # RDFLib adds its own prefixes, so kludge around "time" prefix conflict
+    m.namespace_manager.bind(
+        "time", rdflib.URIRef("http://lv2plug.in/ns/ext/time#"), replace=True
+    )
+
     manifest_path = os.path.join(os.path.dirname(specloc), "manifest.ttl")
     if os.path.exists(manifest_path):
         m.parse(manifest_path, format="n3")
@@ -1490,8 +1267,6 @@ def specgen(
 
     name = specProperty(m, spec, doap.name)
     title = name
-    if root_link:
-        name = '<a href="%s">%s</a>' % (root_link, name)
 
     template = template.replace("@TITLE@", title)
     template = template.replace("@NAME@", name)
@@ -1500,15 +1275,9 @@ def specgen(
     )
     template = template.replace("@URI@", spec)
     template = template.replace("@PREFIX@", spec_pre)
-    if spec_pre == "lv2":
-        template = template.replace("@XMLNS@", "")
-    else:
-        template = template.replace(
-            "@XMLNS@", '      xmlns:%s="%s"' % (spec_pre, spec_ns_str)
-        )
 
     filename = os.path.basename(specloc)
-    basename = filename[0 : filename.rfind(".")]
+    basename = os.path.splitext(filename)[0]
 
     template = template.replace("@STYLE_URI@", style_uri)
     template = template.replace("@PREFIXES@", str(prefixes_html))
@@ -1518,7 +1287,6 @@ def specgen(
     template = template.replace("@REFERENCE@", termlist)
     template = template.replace("@FILENAME@", filename)
     template = template.replace("@HEADER@", basename + ".h")
-    template = template.replace("@HISTORY@", specHistory(m, spec))
 
     mail_row = ""
     if "list_email" in opts:
@@ -1564,10 +1332,6 @@ def specgen(
     template = template.replace("@DATE@", build_date.strftime("%F"))
     template = template.replace("@TIME@", build_date.strftime("%F %H:%M UTC"))
 
-    # Write index row
-    if index_path is not None:
-        writeIndex(m, specloc, index_path, root_path, root_uri, opts["online"])
-
     # Validate complete output page
     try:
         oldcwd = os.getcwd()
@@ -1580,7 +1344,9 @@ def specgen(
             etree.XMLParser(dtd_validation=True, no_network=True),
         )
     except Exception as e:
-        sys.stderr.write("error: Validation failed for %s: %s" % (specloc, e))
+        sys.stderr.write(
+            "error: Validation failed for %s: %s\n" % (specloc, e)
+        )
     finally:
         os.chdir(oldcwd)
 
@@ -1589,10 +1355,9 @@ def specgen(
 
 def save(path, text):
     try:
-        f = open(path, "w")
-        f.write(text)
-        f.flush()
-        f.close()
+        with open(path, "w") as f:
+            f.write(text)
+            f.flush()
     except Exception:
         e = sys.exc_info()[1]
         print('Error writing to file "' + path + '": ' + str(e))
@@ -1628,12 +1393,57 @@ def usage():
     return "Usage: %s ONTOLOGY_TTL OUTPUT_HTML [OPTION]..." % script
 
 
+def _path_from_env(variable, default):
+    value = os.environ.get(variable)
+    return value if value and os.path.isabs(value) else default
+
+
+def _paths_from_env(variable, default):
+    paths = []
+    value = os.environ.get(variable)
+    if value:
+        paths = [p for p in value.split(os.pathsep) if os.path.isabs(p)]
+
+    return paths if paths else default
+
+
+def _data_dirs():
+    return _paths_from_env(
+        "XDG_DATA_DIRS", ["/usr/local/share/", "/usr/share/"]
+    )
+
+
 if __name__ == "__main__":
     """Ontology specification generator tool"""
 
-    indir = os.path.abspath(os.path.dirname(sys.argv[0]))
-    if not os.path.exists(os.path.join(indir, "template.html")):
-        indir = os.path.join(os.path.dirname(indir), "share", "lv2specgen")
+    data_dir = None
+    for d in _data_dirs():
+        path = os.path.join(d, "lv2specgen")
+        if (
+            os.path.exists(os.path.join(path, "template.html"))
+            and os.path.exists(os.path.join(path, "style.css"))
+            and os.path.exists(os.path.join(path, "pygments.css"))
+        ):
+            data_dir = path
+            break
+
+    if data_dir:
+        # Use installed files
+        specgendir = data_dir
+        default_template_path = os.path.join(data_dir, "template.html")
+        default_style_dir = data_dir
+    else:
+        script_path = os.path.realpath(__file__)
+        script_dir = os.path.dirname(os.path.realpath(__file__))
+        if os.path.exists(os.path.join(script_dir, "template.html")):
+            # Run from source repository
+            specgendir = script_dir
+            lv2_source_root = os.path.dirname(script_dir)
+            default_template_path = os.path.join(script_dir, "template.html")
+            default_style_dir = os.path.join(lv2_source_root, "doc", "style")
+        else:
+            sys.stderr.write("error: Unable to find lv2specgen data\n")
+            sys.exit(-2)
 
     opt = optparse.OptionParser(
         usage=usage(),
@@ -1652,11 +1462,18 @@ if __name__ == "__main__":
         help="Mailing list info page address",
     )
     opt.add_option(
-        "--template-dir",
+        "--template",
         type="string",
-        dest="template_dir",
-        default=indir,
-        help="Template directory",
+        dest="template",
+        default=default_template_path,
+        help="Template file for output page",
+    )
+    opt.add_option(
+        "--style-dir",
+        type="string",
+        dest="style_dir",
+        default=default_style_dir,
+        help="Stylesheet directory path",
     )
     opt.add_option(
         "--style-uri",
@@ -1673,34 +1490,11 @@ if __name__ == "__main__":
         help="Doxygen output directory",
     )
     opt.add_option(
-        "--index",
-        type="string",
-        dest="index_path",
-        default=None,
-        help="Index row output file",
-    )
-    opt.add_option(
         "--tags",
         type="string",
         dest="tags",
         default=None,
         help="Doxygen tags file",
-    )
-    opt.add_option(
-        "-r",
-        "--root-path",
-        type="string",
-        dest="root_path",
-        default="",
-        help="Root path",
-    )
-    opt.add_option(
-        "-R",
-        "--root-uri",
-        type="string",
-        dest="root_uri",
-        default="",
-        help="Root URI",
     )
     opt.add_option(
         "-p",
@@ -1722,13 +1516,6 @@ if __name__ == "__main__":
         dest="copy_style",
         help="Copy style from template directory to output directory",
     )
-    opt.add_option(
-        "-o",
-        "--online",
-        action="store_true",
-        dest="online",
-        help="Generate index for online documentation",
-    )
 
     (options, args) = opt.parse_args()
     opts = vars(options)
@@ -1740,7 +1527,6 @@ if __name__ == "__main__":
     spec_pre = options.prefix
     ontology = "file:" + str(args[0])
     output = args[1]
-    index_path = options.index_path
     docdir = options.docdir
     tags = options.tags
 
@@ -1753,27 +1539,18 @@ if __name__ == "__main__":
     b = os.path.basename(outdir)
 
     if not os.access(os.path.abspath(spec), os.R_OK):
-        print("warning: extension %s has no %s.ttl file" % (b, b))
+        sys.stderr.write("error: extension %s has no %s.ttl file\n" % (b, b))
         sys.exit(1)
-
-    # Root link
-    root_path = opts["root_path"]
-    root_uri = opts["root_uri"]
-    root_link = os.path.join(root_path, "index.html")
 
     # Generate spec documentation
     specdoc = specgen(
         spec,
-        indir,
+        opts["template"],
         opts["style_uri"],
         docdir,
         tags,
         opts,
         instances=True,
-        root_link=root_link,
-        index_path=index_path,
-        root_path=root_path,
-        root_uri=root_uri,
     )
 
     # Save to HTML output file
@@ -1782,7 +1559,10 @@ if __name__ == "__main__":
     if opts["copy_style"]:
         import shutil
 
-        shutil.copyfile(
-            os.path.join(indir, "style.css"),
-            os.path.join(os.path.dirname(output), "style.css"),
-        )
+        for stylesheet in ["pygments.css", "style.css"]:
+            style_dir = opts["style_dir"]
+            output_dir = os.path.dirname(output)
+            shutil.copyfile(
+                os.path.join(style_dir, stylesheet),
+                os.path.join(output_dir, stylesheet),
+            )

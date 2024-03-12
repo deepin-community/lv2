@@ -1,19 +1,5 @@
-/*
-  LV2 audio peaks utilities
-  Copyright 2016 David Robillard <d@drobilla.net>
-
-  Permission to use, copy, modify, and/or distribute this software for any
-  purpose with or without fee is hereby granted, provided that the above
-  copyright notice and this permission notice appear in all copies.
-
-  THIS SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-  WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-  MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-  ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-  WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-  ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-  OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
+// Copyright 2016 David Robillard <d@drobilla.net>
+// SPDX-License-Identifier: ISC
 
 #ifndef PEAKS_H_INCLUDED
 #define PEAKS_H_INCLUDED
@@ -153,11 +139,11 @@ peaks_sender_send(PeaksSender*    sender,
 
   // eg:offset = OFFSET
   lv2_atom_forge_key(forge, uris->peaks_offset);
-  lv2_atom_forge_int(forge, sender->current_offset);
+  lv2_atom_forge_int(forge, (int32_t)sender->current_offset);
 
   // eg:total = TOTAL
   lv2_atom_forge_key(forge, uris->peaks_total);
-  lv2_atom_forge_int(forge, sender->n_peaks);
+  lv2_atom_forge_int(forge, (int32_t)sender->n_peaks);
 
   // eg:magnitudes = Vector<Float>(PEAK, PEAK, ...)
   lv2_atom_forge_key(forge, uris->peaks_magnitudes);
@@ -166,11 +152,11 @@ peaks_sender_send(PeaksSender*    sender,
     forge, &vec_frame, sizeof(float), uris->atom_Float);
 
   // Calculate how many peaks to send this update
-  const uint32_t chunk_size = MAX(1u, sender->n_samples / sender->n_peaks);
+  const uint32_t chunk_size = MAX(1U, sender->n_samples / sender->n_peaks);
   const uint32_t space      = forge->size - forge->offset;
   const uint32_t remaining  = sender->n_peaks - sender->current_offset;
   const uint32_t n_update =
-    MIN(remaining, MIN(n_frames / 4u, space / sizeof(float)));
+    MIN(remaining, MIN(n_frames / 4U, space / sizeof(float)));
 
   // Calculate peak (maximum magnitude) for each chunk
   for (uint32_t i = 0; i < n_update; ++i) {
