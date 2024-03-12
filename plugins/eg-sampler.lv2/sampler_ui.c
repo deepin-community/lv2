@@ -1,19 +1,5 @@
-/*
-  LV2 Sampler Example Plugin UI
-  Copyright 2011-2016 David Robillard <d@drobilla.net>
-
-  Permission to use, copy, modify, and/or distribute this software for any
-  purpose with or without fee is hereby granted, provided that the above
-  copyright notice and this permission notice appear in all copies.
-
-  THIS SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-  WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-  MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-  ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-  WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-  ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-  OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
+// Copyright 2011-2016 David Robillard <d@drobilla.net>
+// SPDX-License-Identifier: ISC
 
 #include "peaks.h"
 #include "uris.h"
@@ -365,7 +351,7 @@ port_event(LV2UI_Handle handle,
       const LV2_Atom_Object* obj = (const LV2_Atom_Object*)atom;
       if (obj->body.otype == ui->uris.patch_Set) {
         const char* path = read_set_file(&ui->uris, obj);
-        if (path && (!ui->filename || strcmp(path, ui->filename))) {
+        if (path && (!ui->filename || !!strcmp(path, ui->filename))) {
           g_free(ui->filename);
           ui->filename = g_strdup(path);
           gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(ui->file_button),
@@ -447,11 +433,15 @@ extension_data(const char* uri)
 {
   static const LV2UI_Show_Interface show = {ui_show, ui_hide};
   static const LV2UI_Idle_Interface idle = {ui_idle};
+
   if (!strcmp(uri, LV2_UI__showInterface)) {
     return &show;
-  } else if (!strcmp(uri, LV2_UI__idleInterface)) {
+  }
+
+  if (!strcmp(uri, LV2_UI__idleInterface)) {
     return &idle;
   }
+
   return NULL;
 }
 

@@ -1,19 +1,5 @@
-/*
-  LV2 Parameter Example Plugin
-  Copyright 2014-2016 David Robillard <d@drobilla.net>
-
-  Permission to use, copy, modify, and/or distribute this software for any
-  purpose with or without fee is hereby granted, provided that the above
-  copyright notice and this permission notice appear in all copies.
-
-  THIS SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-  WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-  MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-  ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-  WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-  ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-  OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
+// Copyright 2014-2016 David Robillard <d@drobilla.net>
+// SPDX-License-Identifier: ISC
 
 #include "state_map.h"
 
@@ -199,10 +185,10 @@ unmap(Params* self, LV2_URID urid)
 {
   if (self->unmap) {
     return self->unmap->unmap(self->unmap->handle, urid);
-  } else {
-    snprintf(self->urid_buf, sizeof(self->urid_buf), "%u", urid);
-    return self->urid_buf;
   }
+
+  snprintf(self->urid_buf, sizeof(self->urid_buf), "%u", urid);
+  return self->urid_buf;
 }
 
 static LV2_State_Status
@@ -526,8 +512,9 @@ static const LV2_Descriptor descriptor = {EG_PARAMS_URI,
                                           cleanup,
                                           extension_data};
 
-LV2_SYMBOL_EXPORT const LV2_Descriptor*
-                        lv2_descriptor(uint32_t index)
+LV2_SYMBOL_EXPORT
+const LV2_Descriptor*
+lv2_descriptor(uint32_t index)
 {
   return (index == 0) ? &descriptor : NULL;
 }

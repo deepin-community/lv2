@@ -1,3 +1,48 @@
+lv2 (1.18.10-2) unstable; urgency=medium
+
+  * Team upload
+  * debian/lv2-dev.maintscript: Convert symlinks to directories
+
+ -- Sebastian Ramacher <sramacher@debian.org>  Sun, 29 Oct 2023 23:34:37 +0100
+
+lv2 (1.18.10-1) unstable; urgency=medium
+
+  * Team upload
+  * New upstream version 1.18.10 (Closes: #1054337)
+  * debian/: Switch to meson
+  * debian/watch: Consider all extensions
+
+ -- Sebastian Ramacher <sramacher@debian.org>  Sun, 29 Oct 2023 18:00:51 +0100
+
+lv2 (1.18.4-3) unstable; urgency=medium
+
+  * Team upload
+  * Drop example GTK2 UIs (Closes: #967605)
+  * Clean the project properly (Closes: #1045763)
+
+ -- Bastian Germann <bage@debian.org>  Sat, 23 Sep 2023 18:13:28 +0000
+
+lv2 (1.18.4-2) unstable; urgency=medium
+
+  * Set --libdir to fix build on ppc64el with usrmerge build environment.
+    Thanx to vorlon for this patch! (Closes: #1018248)
+  * Fix FTCBFS: Export build tools for waf. Thanks to Helmut Grohne!
+    (Closes: #1021036)
+  * d/copyright: Fix cc-by-sa-3.0 license name
+
+ -- Dennis Braun <d_braun@kabelmail.de>  Mon, 31 Oct 2022 13:24:40 +0100
+
+lv2 (1.18.4-1) unstable; urgency=medium
+
+  * New upstream version 1.18.4
+  * Bump Standards Version to 4.6.1
+  * Mark python3 B-D as native, trying to fix crossbuilding
+  * d/copyright: Add documentation files licensed under CC-BY-SA-3
+  * d/copyright: Add myself to the d/ section
+  * Add salsa ci config
+
+ -- Dennis Braun <d_braun@kabelmail.de>  Sun, 12 Jun 2022 14:12:07 +0200
+
 lv2 (1.18.2-1) unstable; urgency=medium
 
   [ Olivier Humbert ]

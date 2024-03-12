@@ -1,13 +1,9 @@
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 
-<http://ontologi.es/doap-changeset#>
-	a owl:Ontology ;
-	rdfs:seeAlso <dcs.ttl> .
-
 <http://purl.org/dc/terms/>
 	a owl:Ontology ;
-	rdfs:seeAlso <dct.ttl> .
+	rdfs:seeAlso <dcterms.ttl> .
 
 <http://usefulinc.com/ns/doap#>
 	a owl:Ontology ;
@@ -21,7 +17,7 @@
 	a owl:Ontology ;
 	rdfs:seeAlso <owl.ttl> .
 
-<http://www.w3.org/2000/01/rdf-schema#>
+rdfs:
 	a owl:Ontology ;
 	rdfs:seeAlso <rdfs.ttl> .
 
@@ -32,3 +28,4 @@
 <http://www.w3.org/2001/XMLSchema#>
 	a owl:Ontology ;
 	rdfs:seeAlso <xsd.ttl> .
+
