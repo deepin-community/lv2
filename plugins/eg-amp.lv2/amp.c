@@ -1,19 +1,6 @@
-/*
-  Copyright 2006-2016 David Robillard <d@drobilla.net>
-  Copyright 2006 Steve Harris <steve@plugin.org.uk>
-
-  Permission to use, copy, modify, and/or distribute this software for any
-  purpose with or without fee is hereby granted, provided that the above
-  copyright notice and this permission notice appear in all copies.
-
-  THIS SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-  WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-  MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-  ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-  WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-  ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-  OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
+// Copyright 2006-2016 David Robillard <d@drobilla.net>
+// Copyright 2006 Steve Harris <steve@plugin.org.uk>
+// SPDX-License-Identifier: ISC
 
 /**
    LV2 headers are based on the URI of the specification they come from, so a
@@ -203,7 +190,7 @@ static const LV2_Descriptor descriptor = {AMP_URI,
    The `lv2_descriptor()` function is the entry point to the plugin library. The
    host will load the library and call this function repeatedly with increasing
    indices to find all the plugins defined in the library.  The index is not an
-   indentifier, the URI of the returned descriptor is used to determine the
+   identifier, the URI of the returned descriptor is used to determine the
    identify of the plugin.
 
    This method is in the ``discovery'' threading class, so no other functions

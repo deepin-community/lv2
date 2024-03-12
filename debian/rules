@@ -1,39 +1,16 @@
 #!/usr/bin/make -f
 # -*- makefile -*-
 
-include /usr/share/dpkg/architecture.mk
-
 export DEB_BUILD_MAINT_OPTIONS = hardening=+bindnow
-
-WAF = python3 ./waf
 
 %:
 	dh $@
 
 override_dh_auto_configure:
-	$(WAF) configure --prefix=/usr \
-		--mandir=/usr/share/man \
-		--strict
+	dh_auto_configure -- -Dlv2dir=/usr/lib/lv2
 
-override_dh_auto_build:
-	$(WAF)
-
-override_dh_auto_clean:
-	$(WAF) clean || true
-	find -name "*.pyc" -delete
-	dh_auto_clean
-
-override_dh_auto_install:
-	$(WAF) install --destdir=$(CURDIR)/debian/tmp
-
-override_dh_install:
-	dh_install
-	for plugin in `cat debian/lv2-examples.install`; do \
-		rm -rf debian/lv2-dev/$$plugin ; \
-	done
-	# move .pc files to a multiarch directory
-	mkdir debian/lv2-dev/usr/lib/$(DEB_HOST_MULTIARCH)
-	mv debian/lv2-dev/usr/lib/pkgconfig debian/lv2-dev/usr/lib/$(DEB_HOST_MULTIARCH)/pkgconfig
+execute_after_dh_install:
+	rm -rf debian/lv2-dev/usr/lib/lv2/eg-*
 
 override_dh_installchangelogs:
 	dh_installchangelogs NEWS

@@ -1,1 +1,3 @@
 debian/dh_lv2config.1
+build/
+.lock-waf_linux_build
